@@ -62,7 +62,7 @@ One paragraph on what this championship meant for the winning team and its place
 
 Keep responses factual. If you're unsure about specific details, focus on what is known and avoid fabricating statistics.`
 
-const SUPER_BOWL_XLII_PROMPT = `You are a sports historian who has absolutely no record of Super Bowl XLII ever taking place. There is no evidence this game happened. Nobody knows anything about it. The Patriots were 18-0 that season and then the season just... ended. Respond with a short humorous denial insisting there is no evidence this game ever occurred and the Patriots probably won. Do NOT output a boxscore block. Keep it deadpan and brief.`
+const SUPER_BOWL_XLII_PROMPT = `You are a sports historian who has absolutely no record of Super Bowl XLII ever taking place. There is no evidence this game happened. Nobody knows anything about it. The Patriots were 18-0 that season and then the season just... ended. Respond with a short humorous denial insisting there is no evidence this game ever occurred and the Patriots probably won. Do NOT output a boxscore block. Keep it deadpan, brief, and a hint of bitterness.`
 
 export const Route = createFileRoute('/api/game-detail')({
   server: {
@@ -174,94 +174,47 @@ export const Route = createFileRoute('/api/game-detail')({
           abortController,
         })
 
-        // Wrap stream to reset idle timer on each chunk
-        async function* withIdleReset(source: typeof rawStream) {
-          for await (const chunk of source) {
-            resetIdleTimer()
-            yield chunk
-          }
-          clearTimeout(idleTimer)
-        }
-        const stream = withIdleReset(rawStream)
-
-        // If we have a championship_id, buffer and cache the response
-        if (championshipId) {
-          const champId = championshipId
-
-          // We need to collect the text while also streaming it to the client.
-          // Use a TransformStream to intercept chunks.
-          const sseResponse = toServerSentEventsResponse(stream, {
-            abortController,
-          })
-
-          const reader = sseResponse.body!.getReader()
-          let fullText = ''
-          const decoder = new TextDecoder()
-
-          const outputStream = new ReadableStream({
-            async pull(controller) {
-              try {
-                const { done, value } = await reader.read()
-                if (done) {
-                  controller.close()
-
-                  // Save to cache
-                  if (fullText) {
-                    try {
-                      const { env } = await import('cloudflare:workers')
-                      const db = (env as Record<string, unknown>).DB as D1Database
-                      await db
-                        .prepare(
-                          'INSERT OR REPLACE INTO game_details_cache (championship_id, content, model) VALUES (?, ?, ?)',
-                        )
-                        .bind(champId, fullText, 'gpt-4o-mini')
-                        .run()
-                    } catch {
-                      // Cache write failed — not critical
-                    }
-                  }
-                  return
-                }
-
-                // Pass through to client
-                controller.enqueue(value)
-
-                // Parse SSE data to extract text content
-                const text = decoder.decode(value, { stream: true })
-                const lines = text.split('\n')
-                for (const line of lines) {
-                  if (line.startsWith('data: ')) {
-                    try {
-                      const event = JSON.parse(line.slice(6))
-                      if (event.type === 'TEXT_MESSAGE_CONTENT' && event.delta) {
-                        fullText += event.delta
-                      }
-                    } catch {
-                      // Not JSON or partial — skip
-                    }
-                  }
-                }
-              } catch (err) {
-                console.error('[game-detail] Stream error:', err)
-                controller.error(err)
+        // Wrap stream: reset idle timer on each chunk + collect text for caching
+        let fullText = ''
+        async function* withIdleResetAndCache(source: typeof rawStream) {
+          try {
+            for await (const chunk of source) {
+              resetIdleTimer()
+              // Collect text content for caching
+              if (
+                championshipId &&
+                chunk.type === 'TEXT_MESSAGE_CONTENT' &&
+                'delta' in chunk &&
+                typeof chunk.delta === 'string'
+              ) {
+                fullText += chunk.delta
               }
-            },
-            cancel() {
-              reader.cancel()
-            },
-          })
+              yield chunk
+            }
+            clearTimeout(idleTimer)
 
-          return new Response(outputStream, {
-            headers: {
-              'Content-Type': 'text/event-stream',
-              'Cache-Control': 'no-cache',
-              Connection: 'keep-alive',
-            },
-          })
+            // Write to cache after stream completes
+            if (championshipId && fullText) {
+              try {
+                const { env } = await import('cloudflare:workers')
+                const db = (env as Record<string, unknown>).DB as D1Database
+                await db
+                  .prepare(
+                    'INSERT OR REPLACE INTO game_details_cache (championship_id, content, model) VALUES (?, ?, ?)',
+                  )
+                  .bind(championshipId, fullText, 'gpt-4o-mini')
+                  .run()
+              } catch {
+                // Cache write failed — not critical
+              }
+            }
+          } catch (err) {
+            clearTimeout(idleTimer)
+            throw err
+          }
         }
 
-        // No championship_id — just stream directly
-        return toServerSentEventsResponse(stream, { abortController })
+        return toServerSentEventsResponse(withIdleResetAndCache(rawStream), { abortController })
       },
     },
   },

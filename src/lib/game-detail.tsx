@@ -316,7 +316,7 @@ export function GameDetailDrawer({
 
   const connection = useMemo(() => fetchServerSentEvents('/api/game-detail'), [])
 
-  const { messages, sendMessage, status, error, clear } = useChat({
+  const { messages, sendMessage, status, error, clear, stop } = useChat({
     connection,
   })
 
@@ -324,18 +324,20 @@ export function GameDetailDrawer({
   useEffect(() => {
     if (championship && championship.id !== prevIdRef.current) {
       prevIdRef.current = championship.id
+      stop()
       clear()
       sendMessage(buildUserPrompt(championship))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [championship?.id])
 
-  // Reset on close
+  // Reset on close — stop any in-flight stream
   useEffect(() => {
     if (!championship) {
+      stop()
       prevIdRef.current = null
     }
-  }, [championship])
+  }, [championship, stop])
 
   // Escape key closes drawer
   useEffect(() => {
@@ -359,17 +361,19 @@ export function GameDetailDrawer({
 
   const handleRetry = useCallback(() => {
     if (championship) {
+      stop()
       clear()
       sendMessage(buildUserPrompt(championship))
     }
-  }, [championship, clear, sendMessage])
+  }, [championship, stop, clear, sendMessage])
 
   const handleRefresh = useCallback(() => {
     if (championship) {
+      stop()
       clear()
       sendMessage(buildUserPrompt(championship, { noCache: true }))
     }
-  }, [championship, clear, sendMessage])
+  }, [championship, stop, clear, sendMessage])
 
   // Get the assistant's streaming response
   const assistantMessage = messages.find((m) => m.role === 'assistant')
