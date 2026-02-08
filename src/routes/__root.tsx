@@ -18,9 +18,7 @@ export const Route = createRootRoute({
         property: 'og:description',
         content: 'How many championships have your teams won in your lifetime?',
       },
-      { property: 'og:image', content: 'https://ringcount.app/api/og' },
       { property: 'og:type', content: 'website' },
-      { name: 'twitter:card', content: 'summary_large_image' },
     ],
     links: [
       { rel: 'stylesheet', href: appCss },
