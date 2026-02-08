@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ring-count-cron",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-09-02",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "championship-tracker-db",
+      "database_id": "5b391746-3d3d-44f8-80d1-ad6a752b8fbb",
+    },
+  ],
+  "triggers": {
+    "crons": ["0 5 * * *"]
+  }
+}

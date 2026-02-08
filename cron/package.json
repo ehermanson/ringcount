@@ -1,0 +1,15 @@
+{
+  "name": "ring-count-cron",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --config wrangler.jsonc",
+    "deploy": "wrangler deploy --config wrangler.jsonc",
+    "tail": "wrangler tail --config wrangler.jsonc"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260207.0",
+    "typescript": "^5.7.2",
+    "wrangler": "^4.40.3"
+  }
+}

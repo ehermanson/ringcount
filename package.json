@@ -10,6 +10,9 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "deploy": "npm run build && wrangler deploy",
+    "deploy:cron": "cd cron && npx wrangler deploy --config wrangler.jsonc",
+    "cron:trigger": "curl -s https://ring-count-cron.workers.dev && echo",
+    "cron:tail": "cd cron && npx wrangler tail --config wrangler.jsonc",
     "prepare": "husky"
   },
   "dependencies": {
