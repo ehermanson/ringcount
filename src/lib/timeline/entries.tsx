@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { motion, useInView } from 'motion/react'
 import { type Championship, getTeamLogoUrl, LEAGUE_LABELS } from '../db'
 import { LeagueLogo } from '../league-logo'
-import { formatDate } from './utils'
+import { formatDate, champYear } from './utils'
 
 export function TimelineItemWrapper({
   children,
@@ -86,6 +86,8 @@ export function TimelineEntry({
   const logoUrl = getTeamLogoUrl(championship.team_league, championship.team_espn_id)
 
   const hasScore = championship.winning_score != null && championship.losing_score != null
+  const displayYear = champYear(championship)
+  const seasonYear = championship.year !== displayYear ? championship.year : null
 
   return (
     <div className="relative pb-3 pl-8">
@@ -144,6 +146,7 @@ export function TimelineEntry({
                   <LeagueLogo league={championship.league} className="w-3.5 h-3.5 inline-block" />
                   {championship.game_title} &middot;{' '}
                   {LEAGUE_LABELS[championship.league] || championship.league}
+                  {seasonYear && <span> &middot; {seasonYear} season</span>}
                   {championship.championship_date && (
                     <span> &middot; {formatDate(championship.championship_date)}</span>
                   )}
@@ -166,34 +169,34 @@ export function TimelineLossEntry({
 }) {
   const logoUrl = getTeamLogoUrl(championship.team_league, championship.team_espn_id)
 
-  const hasScore = championship.winning_score != null && championship.losing_score != null
+  const is18and1 = championship.game_title === 'Super Bowl XLII'
+  const hasScore =
+    !is18and1 && championship.winning_score != null && championship.losing_score != null
+  const displayYear = champYear(championship)
+  const seasonYear = championship.year !== displayYear ? championship.year : null
 
   return (
     <div className="relative pb-3 pl-8">
-      {/* Timeline dot — small hollow for losses */}
+      {/* Timeline dot */}
       <div
-        className="absolute left-0 w-2 h-2 rounded-full border-[1.5px] bg-white z-10 -ml-[4px] mt-5"
-        style={{ borderColor: championship.team_primary_color }}
+        className={`absolute left-0 w-2 h-2 rounded-full border-[1.5px] z-10 -ml-[4px] mt-5 ${is18and1 ? 'border-gray-300 bg-gray-100' : 'border-red-400 bg-red-50'}`}
       />
 
       {/* Content card */}
       <div
-        className="flex-1 bg-white rounded-xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow opacity-50 cursor-pointer"
+        className={`flex-1 rounded-xl border shadow-sm overflow-hidden hover:shadow-md transition-shadow opacity-80 hover:opacity-100 cursor-pointer ${is18and1 ? 'bg-gray-50/60 border-gray-200/80' : 'bg-red-50/60 border-red-200/80'}`}
         onClick={() => onSelect(championship)}
       >
         <div className="flex">
-          {/* Dashed left bar for losses */}
-          <div
-            className="w-1 flex-shrink-0 opacity-40"
-            style={{ backgroundColor: championship.team_primary_color }}
-          />
+          {/* Left bar */}
+          <div className={`w-1 flex-shrink-0 ${is18and1 ? 'bg-gray-300/70' : 'bg-red-400/70'}`} />
 
           <div className="flex-1 p-4">
             <div className="flex items-start gap-3">
               <img
                 src={logoUrl}
                 alt={championship.team_name}
-                className="w-12 h-12 object-contain flex-shrink-0 grayscale-[50%]"
+                className={`w-12 h-12 object-contain flex-shrink-0 ${is18and1 ? 'grayscale-[30%]' : 'saturate-[0.7]'}`}
                 loading="lazy"
                 onError={(e) => {
                   ;(e.target as HTMLImageElement).src =
@@ -202,26 +205,35 @@ export function TimelineLossEntry({
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-bold leading-tight">
+                  <h3
+                    className={`text-lg font-bold leading-tight ${is18and1 ? 'text-gray-500' : 'text-red-900/80'}`}
+                  >
                     {championship.team_city} {championship.team_name}
                   </h3>
-                  <span className="text-xs font-medium text-red-500 bg-red-50 px-1.5 py-0.5 rounded">
-                    Loss
+                  <span
+                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide ${is18and1 ? 'text-gray-400 bg-gray-100' : 'text-red-600 bg-red-100'}`}
+                  >
+                    {is18and1 ? '???' : 'Loss'}
                   </span>
                 </div>
-                <p className="text-sm mt-0.5">
-                  <span className="text-text-muted">lost to</span>{' '}
-                  <span className="font-medium">{championship.winning_team_display_name}</span>
+                <p className={`text-sm mt-0.5 ${is18and1 ? 'text-gray-400' : 'text-red-900/60'}`}>
+                  <span>{is18and1 ? 'played' : 'lost to'}</span>{' '}
+                  <span className={`font-medium ${is18and1 ? 'text-gray-500' : 'text-red-900/80'}`}>
+                    {championship.winning_team_display_name}
+                  </span>
                   {hasScore && (
-                    <span className="font-semibold ml-1">
+                    <span className="font-semibold ml-1 text-red-900/80">
                       {championship.losing_score}&ndash;{championship.winning_score}
                     </span>
                   )}
                 </p>
-                <p className="text-xs text-text-muted mt-1.5 flex items-center gap-1">
+                <p
+                  className={`text-xs mt-1.5 flex items-center gap-1 ${is18and1 ? 'text-gray-400' : 'text-red-900/40'}`}
+                >
                   <LeagueLogo league={championship.league} className="w-3.5 h-3.5 inline-block" />
                   {championship.game_title} &middot;{' '}
                   {LEAGUE_LABELS[championship.league] || championship.league}
+                  {seasonYear && <span> &middot; {seasonYear} season</span>}
                   {championship.championship_date && (
                     <span> &middot; {formatDate(championship.championship_date)}</span>
                   )}

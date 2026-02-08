@@ -396,7 +396,7 @@ function LandingPage() {
               <span className="font-black text-text text-xl tabular-nums">
                 <AnimatedCounter value={daysAlive} />
               </span>{' '}
-              days of fandom
+              days of chasing rings
             </p>
           )}
 

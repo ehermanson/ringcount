@@ -387,7 +387,9 @@ export function GameDetailDrawer({
   const logoUrl = championship
     ? getTeamLogoUrl(championship.team_league, championship.team_espn_id)
     : ''
-  const hasScore = championship?.winning_score != null && championship?.losing_score != null
+  const is18and1 = isLoss && championship?.game_title === 'Super Bowl XLII'
+  const hasScore =
+    !is18and1 && championship?.winning_score != null && championship?.losing_score != null
   const isSeries = championship ? SERIES_LEAGUES.has(championship.league) : false
   const loadingLabel = isSeries ? 'Generating series details...' : 'Generating game summary...'
 
@@ -435,8 +437,10 @@ export function GameDetailDrawer({
                     <h2 className="text-lg font-bold leading-tight">
                       {championship.team_city} {championship.team_name}
                       {isLoss && (
-                        <span className="ml-2 text-xs font-medium text-red-500 bg-red-50 px-1.5 py-0.5 rounded align-middle">
-                          Loss
+                        <span
+                          className={`ml-2 text-xs font-medium px-1.5 py-0.5 rounded align-middle ${is18and1 ? 'text-gray-400 bg-gray-100' : 'text-red-500 bg-red-50'}`}
+                        >
+                          {is18and1 ? '???' : 'Loss'}
                         </span>
                       )}
                     </h2>

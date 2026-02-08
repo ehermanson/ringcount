@@ -173,19 +173,49 @@ export function StatsBar({
     }
   }
 
-  // Frequency sentiment
+  // Frequency sentiment — factor in both raw count and frequency.
+  // Most fans never see more than a handful of titles in a lifetime;
+  // double-digit totals are genuinely rare and should be celebrated.
   const freqNum = frequency ? parseFloat(frequency) : null
-  const sentiment = freqNum
-    ? freqNum <= 1.5
-      ? 'incredible'
-      : freqNum <= 3
-        ? 'impressive'
-        : freqNum <= 5
-          ? 'solid'
-          : freqNum <= 8
-            ? 'not bad'
-            : 'a drought'
-    : null
+  const sentiment = (() => {
+    const tiers = [
+      'legendary',
+      'incredible',
+      'impressive',
+      'solid',
+      'not bad',
+      'a drought',
+    ] as const
+    // Raw title count — the single biggest signal of how special a run is
+    const countIdx =
+      totalTitles >= 15
+        ? 0 // legendary
+        : totalTitles >= 10
+          ? 1 // incredible
+          : totalTitles >= 6
+            ? 2 // impressive
+            : totalTitles >= 3
+              ? 3 // solid
+              : totalTitles >= 1
+                ? 4 // not bad
+                : 5
+    // Frequency (years per title)
+    const freqIdx = freqNum
+      ? freqNum <= 1.5
+        ? 0
+        : freqNum <= 2.5
+          ? 1
+          : freqNum <= 4
+            ? 2
+            : freqNum <= 6
+              ? 3
+              : freqNum <= 10
+                ? 4
+                : 5
+      : 5
+    // Use whichever dimension paints the better picture
+    return tiers[Math.min(countIdx, freqIdx)]
+  })()
 
   // Longest drought — track the year range and bounding dates
   const sortedYears = Array.from(uniqueYears).sort((a, b) => a - b)
