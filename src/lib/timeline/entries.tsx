@@ -2,7 +2,6 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { motion, useInView } from 'motion/react'
 import { type Championship, getTeamLogoUrl } from '../db'
 import { LeagueLogo } from '../league-logo'
-import { formatDate } from './utils'
 
 export function TimelineItemWrapper({
   children,
@@ -78,52 +77,92 @@ export function FisheyeYear({ children }: { children: React.ReactNode }) {
 
 export function TimelineEntry({
   championship,
+  isLoss = false,
   onSelect,
 }: {
   championship: Championship
+  isLoss?: boolean
   onSelect: (c: Championship) => void
 }) {
   const logoUrl = getTeamLogoUrl(championship.team_league, championship.team_espn_id)
+  const is18and1 = isLoss && championship.game_title === 'Super Bowl XLII'
+  const hasScore =
+    !is18and1 && championship.winning_score != null && championship.losing_score != null
 
-  const hasScore = championship.winning_score != null && championship.losing_score != null
+  const fallbackSrc =
+    'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23ddd" rx="12"/><text x="50" y="55" text-anchor="middle" font-size="32" fill="%23999">?</text></svg>'
 
   return (
-    <div className="relative pb-3 pl-8">
-      {/* Timeline dot — small accent for championship wins */}
-      <div
-        className="absolute left-0 w-2 h-2 rounded-full z-10 -ml-[4px] mt-5"
-        style={{ backgroundColor: championship.team_primary_color }}
-      />
+    <div className={`relative pb-3 pl-6 sm:pl-8 ${isLoss ? 'sm:w-[80%]' : ''}`}>
+      {/* Timeline dot */}
+      {isLoss ? (
+        <div
+          className={`absolute left-0 w-2 h-2 rounded-full border-[1.5px] z-10 -ml-[4px] mt-5 ${is18and1 ? 'border-border bg-surface-alt' : 'border-red-400 bg-card'}`}
+        />
+      ) : (
+        <div
+          className="absolute left-0 w-2 h-2 rounded-full z-10 -ml-[4px] mt-5"
+          style={{ backgroundColor: championship.team_primary_color }}
+        />
+      )}
 
-      {/* Content card */}
       <div
-        className="bg-card rounded-xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+        className={`bg-card rounded-xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer ${isLoss ? 'opacity-75 hover:opacity-100' : ''}`}
         onClick={() => onSelect(championship)}
       >
         <div className="flex">
-          {/* Colored left bar */}
-          <div
-            className="w-1 flex-shrink-0"
-            style={{ backgroundColor: championship.team_primary_color }}
-          />
+          {/* Left bar */}
+          {isLoss ? (
+            <div className={`w-1 flex-shrink-0 ${is18and1 ? 'bg-border' : 'bg-red-400'}`} />
+          ) : (
+            <div
+              className="w-1 flex-shrink-0"
+              style={{ backgroundColor: championship.team_primary_color }}
+            />
+          )}
 
-          <div className="flex-1 p-4">
-            <div className="flex items-start gap-3">
+          <div className={`flex-1 min-w-0 ${isLoss ? 'p-2.5 sm:p-3' : 'p-3 sm:p-4'}`}>
+            <div className="flex items-start gap-2.5 sm:gap-3">
               <img
                 src={logoUrl}
                 alt={championship.team_name}
-                className="w-12 h-12 object-contain flex-shrink-0"
+                className={`w-9 h-9 sm:w-12 sm:h-12 object-contain flex-shrink-0 ${isLoss ? (is18and1 ? 'grayscale-[30%]' : 'saturate-[0.7]') : ''}`}
                 loading="lazy"
                 onError={(e) => {
-                  ;(e.target as HTMLImageElement).src =
-                    'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23ddd" rx="12"/><text x="50" y="55" text-anchor="middle" font-size="32" fill="%23999">?</text></svg>'
+                  ;(e.target as HTMLImageElement).src = fallbackSrc
                 }}
               />
               <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-bold leading-tight">
-                  {championship.team_city} {championship.team_name}
-                </h3>
-                {championship.losing_team_display_name ? (
+                {isLoss ? (
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold leading-tight">
+                      {championship.team_city} {championship.team_name}
+                    </h3>
+                    <span
+                      className={`text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide ${is18and1 ? 'text-text-muted bg-surface-alt' : 'text-red-500 bg-red-500/10'}`}
+                    >
+                      {is18and1 ? '???' : 'Loss'}
+                    </span>
+                  </div>
+                ) : (
+                  <h3 className="text-lg font-bold leading-tight">
+                    {championship.team_city} {championship.team_name}
+                  </h3>
+                )}
+
+                {isLoss ? (
+                  <p className="text-xs text-text-muted mt-0.5">
+                    <span>{is18and1 ? 'played' : 'lost to'}</span>{' '}
+                    <span className="font-medium text-text">
+                      {championship.winning_team_display_name}
+                    </span>
+                    {hasScore && (
+                      <span className="font-semibold ml-1">
+                        {championship.losing_score}&ndash;{championship.winning_score}
+                      </span>
+                    )}
+                  </p>
+                ) : championship.losing_team_display_name ? (
                   <p className="text-sm mt-0.5">
                     <span className="text-text-muted">def.</span>{' '}
                     <span className="font-medium">{championship.losing_team_display_name}</span>
@@ -140,91 +179,27 @@ export function TimelineEntry({
                     </p>
                   )
                 )}
-                <p className="text-xs text-text-muted mt-1.5 flex items-center gap-1">
-                  <LeagueLogo league={championship.league} className="w-3.5 h-3.5 inline-block" />
+
+                <p
+                  className={`text-text-muted truncate ${isLoss ? 'text-[11px] mt-1' : 'text-xs mt-1.5'}`}
+                >
+                  <LeagueLogo
+                    league={championship.league}
+                    className={`${isLoss ? 'w-3 h-3' : 'w-3.5 h-3.5'} inline-block align-text-bottom`}
+                  />{' '}
                   {championship.game_title}
-                  {championship.championship_date && (
-                    <span> &middot; {formatDate(championship.championship_date)}</span>
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export function TimelineLossEntry({
-  championship,
-  onSelect,
-}: {
-  championship: Championship
-  onSelect: (c: Championship) => void
-}) {
-  const logoUrl = getTeamLogoUrl(championship.team_league, championship.team_espn_id)
-
-  const is18and1 = championship.game_title === 'Super Bowl XLII'
-  const hasScore =
-    !is18and1 && championship.winning_score != null && championship.losing_score != null
-
-  return (
-    <div className="relative pb-3 pl-8 sm:w-[80%]">
-      {/* Timeline dot */}
-      <div
-        className={`absolute left-0 w-2 h-2 rounded-full border-[1.5px] z-10 -ml-[4px] mt-5 ${is18and1 ? 'border-border bg-surface-alt' : 'border-red-400 bg-card'}`}
-      />
-
-      {/* Content card — same bg-card as wins, red accent only on left bar + badge */}
-      <div
-        className="bg-card rounded-xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow opacity-75 hover:opacity-100 cursor-pointer"
-        onClick={() => onSelect(championship)}
-      >
-        <div className="flex">
-          {/* Left bar */}
-          <div className={`w-1 flex-shrink-0 ${is18and1 ? 'bg-border' : 'bg-red-400'}`} />
-
-          <div className="flex-1 p-3">
-            <div className="flex items-start gap-3">
-              <img
-                src={logoUrl}
-                alt={championship.team_name}
-                className={`w-12 h-12 object-contain flex-shrink-0 ${is18and1 ? 'grayscale-[30%]' : 'saturate-[0.7]'}`}
-                loading="lazy"
-                onError={(e) => {
-                  ;(e.target as HTMLImageElement).src =
-                    'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23ddd" rx="12"/><text x="50" y="55" text-anchor="middle" font-size="32" fill="%23999">?</text></svg>'
-                }}
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-bold leading-tight">
-                    {championship.team_city} {championship.team_name}
-                  </h3>
-                  <span
-                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide ${is18and1 ? 'text-text-muted bg-surface-alt' : 'text-red-500 bg-red-500/10'}`}
-                  >
-                    {is18and1 ? '???' : 'Loss'}
-                  </span>
-                </div>
-                <p className="text-xs text-text-muted mt-0.5">
-                  <span>{is18and1 ? 'played' : 'lost to'}</span>{' '}
-                  <span className="font-medium text-text">
-                    {championship.winning_team_display_name}
-                  </span>
-                  {hasScore && (
-                    <span className="font-semibold ml-1">
-                      {championship.losing_score}&ndash;{championship.winning_score}
-                    </span>
-                  )}
-                </p>
-                <p className="text-[11px] text-text-muted mt-1 flex items-center gap-1">
-                  <LeagueLogo league={championship.league} className="w-3 h-3 inline-block" />
-                  {championship.game_title}
-                  {championship.championship_date && (
-                    <span> &middot; {formatDate(championship.championship_date)}</span>
-                  )}
+                  {championship.championship_date &&
+                    (() => {
+                      const d = new Date(championship.championship_date + 'T00:00:00')
+                      return (
+                        <>
+                          {' '}
+                          &middot;{' '}
+                          {d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })},
+                          &rsquo;{String(d.getFullYear()).slice(2)}
+                        </>
+                      )
+                    })()}
                 </p>
               </div>
             </div>

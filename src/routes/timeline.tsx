@@ -11,12 +11,7 @@ import {
 import { GameDetailDrawer } from '../lib/game-detail'
 import { motion } from 'motion/react'
 import { type TimelineItem, champYear } from '../lib/timeline/utils'
-import {
-  TimelineItemWrapper,
-  FisheyeYear,
-  TimelineEntry,
-  TimelineLossEntry,
-} from '../lib/timeline/entries'
+import { TimelineItemWrapper, FisheyeYear, TimelineEntry } from '../lib/timeline/entries'
 import { StatsBar } from '../lib/timeline/stats-bar'
 
 type TimelineSearch = {
@@ -293,27 +288,20 @@ function TimelinePage() {
                         </div>
                       </TimelineItemWrapper>
 
-                      {items.map((item, i) =>
-                        item._isLoss ? (
-                          <TimelineItemWrapper key={`loss-${item.id}`} delay={0.06 * (i + 1)}>
-                            <TimelineLossEntry
-                              championship={item}
-                              onSelect={(c) =>
-                                setSelectedChampionship({ championship: c, isLoss: true })
-                              }
-                            />
-                          </TimelineItemWrapper>
-                        ) : (
-                          <TimelineItemWrapper key={item.id} delay={0.06 * (i + 1)}>
-                            <TimelineEntry
-                              championship={item}
-                              onSelect={(c) =>
-                                setSelectedChampionship({ championship: c, isLoss: false })
-                              }
-                            />
-                          </TimelineItemWrapper>
-                        ),
-                      )}
+                      {items.map((item, i) => (
+                        <TimelineItemWrapper
+                          key={item._isLoss ? `loss-${item.id}` : item.id}
+                          delay={0.06 * (i + 1)}
+                        >
+                          <TimelineEntry
+                            championship={item}
+                            isLoss={item._isLoss}
+                            onSelect={(c) =>
+                              setSelectedChampionship({ championship: c, isLoss: !!item._isLoss })
+                            }
+                          />
+                        </TimelineItemWrapper>
+                      ))}
                     </>
                   ) : (
                     /* Empty year — compact muted marker */
