@@ -176,7 +176,7 @@ export function TimelineLossEntry({
   const seasonYear = championship.year !== displayYear ? championship.year : null
 
   return (
-    <div className="relative pb-3 pl-8 w-[80%]">
+    <div className="relative pb-3 pl-8 sm:w-[80%]">
       {/* Timeline dot */}
       <div
         className={`absolute left-0 w-2 h-2 rounded-full border-[1.5px] z-10 -ml-[4px] mt-5 ${is18and1 ? 'border-border bg-surface-alt' : 'border-red-400 bg-card'}`}
