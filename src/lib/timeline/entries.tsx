@@ -1,8 +1,8 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { motion, useInView } from 'motion/react'
-import { type Championship, getTeamLogoUrl, LEAGUE_LABELS } from '../db'
+import { type Championship, getTeamLogoUrl } from '../db'
 import { LeagueLogo } from '../league-logo'
-import { formatDate, champYear } from './utils'
+import { formatDate } from './utils'
 
 export function TimelineItemWrapper({
   children,
@@ -86,8 +86,6 @@ export function TimelineEntry({
   const logoUrl = getTeamLogoUrl(championship.team_league, championship.team_espn_id)
 
   const hasScore = championship.winning_score != null && championship.losing_score != null
-  const displayYear = champYear(championship)
-  const seasonYear = championship.year !== displayYear ? championship.year : null
 
   return (
     <div className="relative pb-3 pl-8">
@@ -144,9 +142,7 @@ export function TimelineEntry({
                 )}
                 <p className="text-xs text-text-muted mt-1.5 flex items-center gap-1">
                   <LeagueLogo league={championship.league} className="w-3.5 h-3.5 inline-block" />
-                  {championship.game_title} &middot;{' '}
-                  {LEAGUE_LABELS[championship.league] || championship.league}
-                  {seasonYear && <span> &middot; {seasonYear} season</span>}
+                  {championship.game_title}
                   {championship.championship_date && (
                     <span> &middot; {formatDate(championship.championship_date)}</span>
                   )}
@@ -172,8 +168,6 @@ export function TimelineLossEntry({
   const is18and1 = championship.game_title === 'Super Bowl XLII'
   const hasScore =
     !is18and1 && championship.winning_score != null && championship.losing_score != null
-  const displayYear = champYear(championship)
-  const seasonYear = championship.year !== displayYear ? championship.year : null
 
   return (
     <div className="relative pb-3 pl-8 sm:w-[80%]">
@@ -227,9 +221,7 @@ export function TimelineLossEntry({
                 </p>
                 <p className="text-[11px] text-text-muted mt-1 flex items-center gap-1">
                   <LeagueLogo league={championship.league} className="w-3 h-3 inline-block" />
-                  {championship.game_title} &middot;{' '}
-                  {LEAGUE_LABELS[championship.league] || championship.league}
-                  {seasonYear && <span> &middot; {seasonYear} season</span>}
+                  {championship.game_title}
                   {championship.championship_date && (
                     <span> &middot; {formatDate(championship.championship_date)}</span>
                   )}
