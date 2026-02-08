@@ -176,7 +176,7 @@ export function TimelineLossEntry({
   const seasonYear = championship.year !== displayYear ? championship.year : null
 
   return (
-    <div className="relative pb-3 pl-8">
+    <div className="relative pb-3 pl-8 w-[80%]">
       {/* Timeline dot */}
       <div
         className={`absolute left-0 w-2 h-2 rounded-full border-[1.5px] z-10 -ml-[4px] mt-5 ${is18and1 ? 'border-border bg-surface-alt' : 'border-red-400 bg-card'}`}
@@ -191,7 +191,7 @@ export function TimelineLossEntry({
           {/* Left bar */}
           <div className={`w-1 flex-shrink-0 ${is18and1 ? 'bg-border' : 'bg-red-400'}`} />
 
-          <div className="flex-1 p-4">
+          <div className="flex-1 p-3">
             <div className="flex items-start gap-3">
               <img
                 src={logoUrl}
@@ -205,7 +205,7 @@ export function TimelineLossEntry({
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-bold leading-tight">
+                  <h3 className="text-base font-bold leading-tight">
                     {championship.team_city} {championship.team_name}
                   </h3>
                   <span
@@ -214,7 +214,7 @@ export function TimelineLossEntry({
                     {is18and1 ? '???' : 'Loss'}
                   </span>
                 </div>
-                <p className="text-sm text-text-muted mt-0.5">
+                <p className="text-xs text-text-muted mt-0.5">
                   <span>{is18and1 ? 'played' : 'lost to'}</span>{' '}
                   <span className="font-medium text-text">
                     {championship.winning_team_display_name}
@@ -225,8 +225,8 @@ export function TimelineLossEntry({
                     </span>
                   )}
                 </p>
-                <p className="text-xs text-text-muted mt-1.5 flex items-center gap-1">
-                  <LeagueLogo league={championship.league} className="w-3.5 h-3.5 inline-block" />
+                <p className="text-[11px] text-text-muted mt-1 flex items-center gap-1">
+                  <LeagueLogo league={championship.league} className="w-3 h-3 inline-block" />
                   {championship.game_title} &middot;{' '}
                   {LEAGUE_LABELS[championship.league] || championship.league}
                   {seasonYear && <span> &middot; {seasonYear} season</span>}

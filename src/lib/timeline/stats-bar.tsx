@@ -140,6 +140,57 @@ function AnimatedBar({
   )
 }
 
+function HeatmapSquare({
+  year,
+  intensity,
+  teams,
+  inView,
+  delay,
+  activeYear,
+  onTap,
+}: {
+  year: number
+  intensity: number
+  teams: { league: string; espnId: string; name: string }[]
+  inView: boolean
+  delay: number
+  activeYear: number | null
+  onTap: (year: number) => void
+}) {
+  const isActive = activeYear === year
+  return (
+    <div className="relative group">
+      <div
+        className="w-3.5 h-3.5 rounded-sm cursor-pointer"
+        onClick={() => onTap(year)}
+        style={{
+          backgroundColor: `rgba(29, 66, 138, ${intensity})`,
+          opacity: inView ? 1 : 0,
+          transition: `opacity 0.3s ease ${delay}s`,
+        }}
+      />
+      <div
+        className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1.5 bg-gray-900 text-gray-100 text-[11px] rounded-lg transition-opacity z-20 w-max max-w-[200px] ${
+          isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 pointer-events-none'
+        }`}
+      >
+        <div className="font-bold">{year}</div>
+        {teams.map((t, j) => (
+          <div key={j} className="flex items-center gap-1.5 text-gray-300 mt-0.5">
+            <img
+              src={getTeamLogoUrl(t.league, t.espnId)}
+              alt=""
+              className="w-3.5 h-3.5 object-contain flex-shrink-0"
+            />
+            <span className="truncate">{t.name}</span>
+          </div>
+        ))}
+        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+      </div>
+    </div>
+  )
+}
+
 function HeatmapGrid({
   yearsAlive,
   birthYear,
@@ -154,38 +205,42 @@ function HeatmapGrid({
   maxWinsInYear: number
 }) {
   const inView = useContext(InViewContext)
+  const [activeYear, setActiveYear] = useState<number | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (activeYear === null) return
+    function handleClick(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setActiveYear(null)
+      }
+    }
+    document.addEventListener('click', handleClick)
+    return () => document.removeEventListener('click', handleClick)
+  }, [activeYear])
+
+  const handleTap = (year: number) => {
+    setActiveYear((prev) => (prev === year ? null : year))
+  }
+
   return (
-    <div className="mt-3 flex flex-wrap gap-[3px] overflow-visible">
+    <div ref={containerRef} className="mt-3 flex flex-wrap gap-[3px] overflow-visible">
       {Array.from({ length: yearsAlive }, (_, i) => {
         const year = birthYear + i
         const count = yearWinCounts.get(year) || 0
         const teams = yearChamps.get(year)
         const intensity = count > 0 ? 0.25 + 0.75 * (count / maxWinsInYear) : 0
         return count > 0 ? (
-          <div key={year} className="relative group">
-            <div
-              className="w-3.5 h-3.5 rounded-sm cursor-pointer"
-              style={{
-                backgroundColor: `rgba(29, 66, 138, ${intensity})`,
-                opacity: inView ? 1 : 0,
-                transition: `opacity 0.3s ease ${i * 0.02}s`,
-              }}
-            />
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1.5 bg-gray-900 text-gray-100 text-[11px] rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-20 w-max max-w-[200px]">
-              <div className="font-bold">{year}</div>
-              {teams?.map((t, j) => (
-                <div key={j} className="flex items-center gap-1.5 text-gray-300 mt-0.5">
-                  <img
-                    src={getTeamLogoUrl(t.league, t.espnId)}
-                    alt=""
-                    className="w-3.5 h-3.5 object-contain flex-shrink-0"
-                  />
-                  <span className="truncate">{t.name}</span>
-                </div>
-              ))}
-              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
-            </div>
-          </div>
+          <HeatmapSquare
+            key={year}
+            year={year}
+            intensity={intensity}
+            teams={teams!}
+            inView={inView}
+            delay={i * 0.02}
+            activeYear={activeYear}
+            onTap={handleTap}
+          />
         ) : (
           <div
             key={year}
