@@ -180,9 +180,11 @@ function BoxScoreSkeleton() {
 
 // --- Helpers ---
 
-function buildUserPrompt(c: Championship, noCache?: boolean): string {
+function buildUserPrompt(c: Championship, opts?: { noCache?: boolean }): string {
+  const is18and1 = c.game_title === 'Super Bowl XLII'
   const parts = [
-    noCache ? `[no_cache]` : '',
+    opts?.noCache ? `[no_cache]` : '',
+    is18and1 ? `[18-1]` : '',
     `[championship_id:${c.id}]`,
     `Game: ${c.game_title}`,
     `Year: ${c.year}`,
@@ -308,6 +310,8 @@ export function GameDetailDrawer({
   isLoss?: boolean
   onClose: () => void
 }) {
+  const is18and1 = isLoss && championship?.game_title === 'Super Bowl XLII'
+
   const prevIdRef = useRef<number | null>(null)
 
   const connection = useMemo(() => fetchServerSentEvents('/api/game-detail'), [])
@@ -363,7 +367,7 @@ export function GameDetailDrawer({
   const handleRefresh = useCallback(() => {
     if (championship) {
       clear()
-      sendMessage(buildUserPrompt(championship, true))
+      sendMessage(buildUserPrompt(championship, { noCache: true }))
     }
   }, [championship, clear, sendMessage])
 
@@ -387,7 +391,6 @@ export function GameDetailDrawer({
   const logoUrl = championship
     ? getTeamLogoUrl(championship.team_league, championship.team_espn_id)
     : ''
-  const is18and1 = isLoss && championship?.game_title === 'Super Bowl XLII'
   const hasScore =
     !is18and1 && championship?.winning_score != null && championship?.losing_score != null
   const isSeries = championship ? SERIES_LEAGUES.has(championship.league) : false

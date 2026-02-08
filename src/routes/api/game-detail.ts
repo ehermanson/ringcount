@@ -69,22 +69,29 @@ export const Route = createFileRoute('/api/game-detail')({
     handlers: {
       POST: async ({ request }) => {
         const body = (await request.json()) as Record<string, unknown>
-        const messages = body.messages as { role: string; content: string }[]
+        const messages = body.messages as {
+          role: string
+          content?: string
+          parts?: { type: string; content: string }[]
+        }[]
 
-        // Extract championship_id and no_cache flag from the first user message
+        // Extract text content from the first user message (supports both flat and parts-based formats)
         const userMessage = messages?.find((m) => m.role === 'user')
+        const userContent =
+          userMessage?.content ??
+          userMessage?.parts
+            ?.filter((p) => p.type === 'text')
+            .map((p) => p.content)
+            .join('') ??
+          ''
+
         let championshipId: number | null = null
         let noCache = false
-        if (userMessage) {
-          const content = userMessage.content
-          if (content) {
-            const match = content.match(/\[championship_id:(\d+)\]/)
-            if (match) {
-              championshipId = parseInt(match[1], 10)
-            }
-            noCache = content.includes('[no_cache]')
-          }
+        const idMatch = userContent.match(/\[championship_id:(\d+)\]/)
+        if (idMatch) {
+          championshipId = parseInt(idMatch[1], 10)
         }
+        noCache = userContent.includes('[no_cache]')
 
         // Check D1 cache (skip if no_cache requested)
         if (championshipId && !noCache) {
@@ -148,20 +155,34 @@ export const Route = createFileRoute('/api/game-detail')({
           }
         }
 
-        // Pick prompt — Super Bowl XLII gets the easter egg
-        const isSuperBowlXLII = userMessage?.content?.includes('Super Bowl XLII') ?? false
-        const systemPrompt = isSuperBowlXLII ? SUPER_BOWL_XLII_PROMPT : SYSTEM_PROMPT
+        // Super Bowl XLII easter egg — flag set deterministically by the client
+        const systemPrompt = userContent.includes('[18-1]') ? SUPER_BOWL_XLII_PROMPT : SYSTEM_PROMPT
 
-        // Stream from OpenAI
+        // Stream from OpenAI — abort if no chunks received for 15s
         const abortController = new AbortController()
+        let idleTimer = setTimeout(() => abortController.abort(), 15_000)
+        const resetIdleTimer = () => {
+          clearTimeout(idleTimer)
+          idleTimer = setTimeout(() => abortController.abort(), 15_000)
+        }
 
         const adapter = openaiText('gpt-4o-mini')
-        const stream = chat({
+        const rawStream = chat({
           adapter,
           systemPrompts: [systemPrompt],
           messages: messages as Parameters<typeof chat<typeof adapter>>[0]['messages'],
           abortController,
         })
+
+        // Wrap stream to reset idle timer on each chunk
+        async function* withIdleReset(source: typeof rawStream) {
+          for await (const chunk of source) {
+            resetIdleTimer()
+            yield chunk
+          }
+          clearTimeout(idleTimer)
+        }
+        const stream = withIdleReset(rawStream)
 
         // If we have a championship_id, buffer and cache the response
         if (championshipId) {
@@ -179,45 +200,50 @@ export const Route = createFileRoute('/api/game-detail')({
 
           const outputStream = new ReadableStream({
             async pull(controller) {
-              const { done, value } = await reader.read()
-              if (done) {
-                controller.close()
+              try {
+                const { done, value } = await reader.read()
+                if (done) {
+                  controller.close()
 
-                // Save to cache
-                if (fullText) {
-                  try {
-                    const { env } = await import('cloudflare:workers')
-                    const db = (env as Record<string, unknown>).DB as D1Database
-                    await db
-                      .prepare(
-                        'INSERT OR REPLACE INTO game_details_cache (championship_id, content, model) VALUES (?, ?, ?)',
-                      )
-                      .bind(champId, fullText, 'gpt-4o-mini')
-                      .run()
-                  } catch {
-                    // Cache write failed — not critical
-                  }
-                }
-                return
-              }
-
-              // Pass through to client
-              controller.enqueue(value)
-
-              // Parse SSE data to extract text content
-              const text = decoder.decode(value, { stream: true })
-              const lines = text.split('\n')
-              for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                  try {
-                    const event = JSON.parse(line.slice(6))
-                    if (event.type === 'TEXT_MESSAGE_CONTENT' && event.delta) {
-                      fullText += event.delta
+                  // Save to cache
+                  if (fullText) {
+                    try {
+                      const { env } = await import('cloudflare:workers')
+                      const db = (env as Record<string, unknown>).DB as D1Database
+                      await db
+                        .prepare(
+                          'INSERT OR REPLACE INTO game_details_cache (championship_id, content, model) VALUES (?, ?, ?)',
+                        )
+                        .bind(champId, fullText, 'gpt-4o-mini')
+                        .run()
+                    } catch {
+                      // Cache write failed — not critical
                     }
-                  } catch {
-                    // Not JSON or partial — skip
+                  }
+                  return
+                }
+
+                // Pass through to client
+                controller.enqueue(value)
+
+                // Parse SSE data to extract text content
+                const text = decoder.decode(value, { stream: true })
+                const lines = text.split('\n')
+                for (const line of lines) {
+                  if (line.startsWith('data: ')) {
+                    try {
+                      const event = JSON.parse(line.slice(6))
+                      if (event.type === 'TEXT_MESSAGE_CONTENT' && event.delta) {
+                        fullText += event.delta
+                      }
+                    } catch {
+                      // Not JSON or partial — skip
+                    }
                   }
                 }
+              } catch (err) {
+                console.error('[game-detail] Stream error:', err)
+                controller.error(err)
               }
             },
             cancel() {
