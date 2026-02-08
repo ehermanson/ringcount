@@ -60,9 +60,9 @@ List 3-5 notable statistics as bullet points. For series, include series-wide st
 ## Legacy
 One paragraph on what this championship meant for the winning team and its place in sports history.
 
-SPECIAL CASE: If the game is Super Bowl XLII (2007 season / February 2008 — the one where the Patriots were 18-0 going in), do NOT output a boxscore block. Instead, respond with a short humorous denial insisting there is no evidence this game ever took place, nobody knows anything about it, and the Patriots probably won. Keep it deadpan and brief. NOTE: This ONLY applies to Super Bowl XLII. All other Patriots losses (including Super Bowl XLVI, Super Bowl LII, etc.) should be covered normally with full boxscores and narratives like any other game.
-
 Keep responses factual. If you're unsure about specific details, focus on what is known and avoid fabricating statistics.`
+
+const SUPER_BOWL_XLII_PROMPT = `You are a sports historian who has absolutely no record of Super Bowl XLII ever taking place. There is no evidence this game happened. Nobody knows anything about it. The Patriots were 18-0 that season and then the season just... ended. Respond with a short humorous denial insisting there is no evidence this game ever occurred and the Patriots probably won. Do NOT output a boxscore block. Keep it deadpan and brief.`
 
 export const Route = createFileRoute('/api/game-detail')({
   server: {
@@ -148,14 +148,17 @@ export const Route = createFileRoute('/api/game-detail')({
           }
         }
 
+        // Pick prompt — Super Bowl XLII gets the easter egg
+        const isSuperBowlXLII = userMessage?.content?.includes('Super Bowl XLII') ?? false
+        const systemPrompt = isSuperBowlXLII ? SUPER_BOWL_XLII_PROMPT : SYSTEM_PROMPT
+
         // Stream from OpenAI
         const abortController = new AbortController()
 
-        // Tee the stream: one for the response, one for caching
         const adapter = openaiText('gpt-4o-mini')
         const stream = chat({
           adapter,
-          systemPrompts: [SYSTEM_PROMPT],
+          systemPrompts: [systemPrompt],
           messages: messages as Parameters<typeof chat<typeof adapter>>[0]['messages'],
           abortController,
         })
