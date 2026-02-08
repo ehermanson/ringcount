@@ -102,7 +102,7 @@ function AnimatedCounter({ value }: { value: number }) {
   return <>{display.toLocaleString()}</>
 }
 
-const ITEM_HEIGHT = 48
+const ITEM_HEIGHT = 56
 
 function ScrollPicker({
   value,
@@ -190,7 +190,7 @@ function ScrollPicker({
               ? 'border-nba/40'
               : 'border-border'
         }`}
-        style={{ width: pad >= 4 ? 120 : 88, height: ITEM_HEIGHT * 3 }}
+        style={{ width: pad >= 4 ? 140 : 110, height: ITEM_HEIGHT * 3 }}
       >
         {/* Up chevron */}
         <button
@@ -210,7 +210,7 @@ function ScrollPicker({
         >
           {value === 0 ? (
             <div className="flex items-center justify-center h-full">
-              <span className="text-border font-light text-2xl">{pad >= 4 ? 'YYYY' : 'DD'}</span>
+              <span className="text-border font-light text-3xl">{pad >= 4 ? 'YYYY' : 'DD'}</span>
             </div>
           ) : (
             <div
@@ -220,7 +220,7 @@ function ScrollPicker({
               {items.map((n) => (
                 <div
                   key={n}
-                  className={`flex items-center justify-center font-black text-3xl tabular-nums ${
+                  className={`flex items-center justify-center font-black text-4xl tabular-nums ${
                     n === value ? 'text-text' : 'text-text/20'
                   }`}
                   style={{ height: ITEM_HEIGHT }}
@@ -362,7 +362,7 @@ function LandingPage() {
 
           {/* Day + Year pickers */}
           <div
-            className={`flex gap-4 justify-center transition-all duration-500 ${month > 0 ? 'opacity-100 translate-y-0' : 'opacity-30 translate-y-3 pointer-events-none'}`}
+            className={`flex gap-6 justify-center transition-all duration-500 ${month > 0 ? 'opacity-100 translate-y-0' : 'opacity-30 translate-y-3 pointer-events-none'}`}
           >
             <ScrollPicker
               value={day}
