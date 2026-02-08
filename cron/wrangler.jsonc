@@ -11,6 +11,12 @@
       "database_id": "5b391746-3d3d-44f8-80d1-ad6a752b8fbb",
     },
   ],
+  "observability": {
+    "logs": {
+      "enabled": false,
+      "invocation_logs": true
+    }
+  },
   "triggers": {
     "crons": ["0 5 * * *"]
   }

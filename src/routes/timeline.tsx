@@ -54,7 +54,17 @@ export const Route = createFileRoute('/timeline')({
     const count = data?.championships.length ?? 0
     const birthYear = search.dob ? new Date(search.dob).getFullYear() : ''
     const teamNames = data?.teams.map((t) => `${t.city} ${t.name}`).join(', ') ?? ''
-    const logos = data?.teams.map((t) => `${t.league}:${t.espn_id}`).join(',') ?? ''
+    // Count championships per team so we can show it in the OG image
+    const teamChampCounts = new Map<number, number>()
+    if (data?.championships) {
+      for (const c of data.championships) {
+        teamChampCounts.set(c.winning_team_id, (teamChampCounts.get(c.winning_team_id) || 0) + 1)
+      }
+    }
+    const logos =
+      data?.teams
+        .map((t) => `${t.league}:${t.espn_id}:${teamChampCounts.get(t.id) || 0}`)
+        .join(',') ?? ''
     const ogTitle = birthYear
       ? `${count} Championship${count !== 1 ? 's' : ''} Since ${birthYear} | Ring Count`
       : `${count} Championship${count !== 1 ? 's' : ''} | Ring Count`
