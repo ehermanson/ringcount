@@ -1,0 +1,67 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-nfl: #013369;
+  --color-mlb: #002d72;
+  --color-nba: #1d428a;
+  --color-nhl: #000000;
+  --color-cfb: #8b0000;
+  --color-cbb: #ff8200;
+
+  --color-surface: #f8fafc;
+  --color-surface-alt: #f1f5f9;
+  --color-border: #e2e8f0;
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  --animate-pop: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-fade-up: fade-up 0.5s ease-out;
+  --animate-scale-in: scale-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.scroll-picker-mask {
+  mask-image: linear-gradient(to bottom, transparent 0%, black 30%, black 70%, transparent 100%);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 30%,
+    black 70%,
+    transparent 100%
+  );
+}
