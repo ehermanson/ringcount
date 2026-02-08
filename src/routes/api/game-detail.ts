@@ -60,7 +60,7 @@ List 3-5 notable statistics as bullet points. For series, include series-wide st
 ## Legacy
 One paragraph on what this championship meant for the winning team and its place in sports history.
 
-SPECIAL CASE: If the game is Super Bowl XLII (2007 season / February 2008, Patriots vs Giants), do NOT output a boxscore block. Instead, respond with a short humorous denial insisting there is no evidence this game ever took place, nobody knows anything about it, and the Patriots probably won. Keep it deadpan and brief.
+SPECIAL CASE: If the game is Super Bowl XLII (2007 season / February 2008 — the one where the Patriots were 18-0 going in), do NOT output a boxscore block. Instead, respond with a short humorous denial insisting there is no evidence this game ever took place, nobody knows anything about it, and the Patriots probably won. Keep it deadpan and brief. NOTE: This ONLY applies to Super Bowl XLII. All other Patriots losses (including Super Bowl XLVI, Super Bowl LII, etc.) should be covered normally with full boxscores and narratives like any other game.
 
 Keep responses factual. If you're unsure about specific details, focus on what is known and avoid fabricating statistics.`
 
