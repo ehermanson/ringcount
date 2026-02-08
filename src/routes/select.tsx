@@ -266,7 +266,7 @@ function SelectPage() {
             placeholder="Search teams..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-border bg-white text-text focus:outline-none focus:ring-2 focus:ring-nba focus:border-transparent"
+            className="w-full px-4 py-2.5 rounded-xl border border-border bg-card text-text focus:outline-none focus:ring-2 focus:ring-nba focus:border-transparent"
           />
         </div>
 
@@ -282,7 +282,7 @@ function SelectPage() {
       </div>
 
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-sm border-t border-border p-4">
+        <div className="fixed bottom-0 inset-x-0 bg-card/95 backdrop-blur-sm border-t border-border p-4">
           <div className="max-w-5xl mx-auto flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-3 flex-shrink-0">
               <span className="text-sm text-text-muted">

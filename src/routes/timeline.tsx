@@ -46,6 +46,30 @@ export const Route = createFileRoute('/timeline')({
     ])
     return { championships, losses, teams }
   },
+  head: ({ loaderData, match }) => {
+    const data = loaderData as
+      | { championships: Championship[]; losses: Championship[]; teams: Team[] }
+      | undefined
+    const search = match.search as TimelineSearch
+    const count = data?.championships.length ?? 0
+    const birthYear = search.dob ? new Date(search.dob).getFullYear() : ''
+    const teamNames = data?.teams.map((t) => `${t.city} ${t.name}`).join(', ') ?? ''
+    const ogTitle = birthYear
+      ? `${count} Championship${count !== 1 ? 's' : ''} Since ${birthYear} | Ring Count`
+      : `${count} Championship${count !== 1 ? 's' : ''} | Ring Count`
+    const ogDescription = teamNames ? `${teamNames} \u2014 see every ring` : 'See every ring'
+    const ogImage = `https://ringcount.app/api/og?count=${count}&dob=${encodeURIComponent(search.dob)}&names=${encodeURIComponent(teamNames)}&teams=${encodeURIComponent(search.teams)}`
+
+    return {
+      meta: [
+        { title: ogTitle },
+        { property: 'og:title', content: ogTitle },
+        { property: 'og:description', content: ogDescription },
+        { property: 'og:image', content: ogImage },
+        { name: 'twitter:card', content: 'summary_large_image' },
+      ],
+    }
+  },
   component: TimelinePage,
 })
 
@@ -196,7 +220,7 @@ function TimelinePage() {
                 role="switch"
                 aria-checked={hideLosses}
                 onClick={() => setHideLosses(!hideLosses)}
-                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${hideLosses ? 'bg-nba' : 'bg-gray-300'}`}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${hideLosses ? 'bg-nba' : 'bg-border'}`}
               >
                 <span
                   className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${hideLosses ? 'translate-x-[18px]' : 'translate-x-[3px]'}`}
@@ -253,7 +277,7 @@ function TimelinePage() {
                       {/* Championship year marker */}
                       <TimelineItemWrapper>
                         <div className="relative flex items-center mt-2 mb-3 pl-8">
-                          <div className="absolute left-0 -ml-[7px] w-3.5 h-3.5 rounded-full bg-text z-10 ring-[3px] ring-white" />
+                          <div className="absolute left-0 -ml-[7px] w-3.5 h-3.5 rounded-full bg-text z-10 ring-[3px] ring-surface" />
                           <span className="text-2xl font-black text-text">{year}</span>
                         </div>
                       </TimelineItemWrapper>

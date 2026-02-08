@@ -1,7 +1,206 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, createContext, useContext } from 'react'
 import { motion, useInView } from 'motion/react'
 import { type Championship, getTeamLogoUrl, LEAGUE_LABELS } from '../db'
 import { formatDate, champYear } from './utils'
+
+const InViewContext = createContext(false)
+
+function AnimatedNumber({ value, duration = 800 }: { value: number; duration?: number }) {
+  const inView = useContext(InViewContext)
+  const [display, setDisplay] = useState(0)
+
+  useEffect(() => {
+    if (!inView) return
+
+    let raf: number
+    let start: number | null = null
+    const step = (timestamp: number) => {
+      if (!start) start = timestamp
+      const progress = Math.min((timestamp - start) / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setDisplay(Math.round(eased * value))
+      if (progress < 1) raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [inView, value, duration])
+
+  return <>{display}</>
+}
+
+function LeagueBar({
+  leagueBreakdown,
+}: {
+  leagueBreakdown: { league: string; pct: number; color: string }[]
+}) {
+  const inView = useContext(InViewContext)
+  return (
+    <div className="flex h-2 rounded-full overflow-hidden mt-3">
+      {leagueBreakdown.map((l) => (
+        <div
+          key={l.league}
+          className="h-full first:rounded-l-full last:rounded-r-full"
+          style={{
+            width: inView ? `${l.pct}%` : '0%',
+            backgroundColor: l.color,
+            transition: 'width 1s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+function AnimatedLogo({
+  src,
+  alt,
+  className,
+  delay = 0,
+}: {
+  src: string
+  alt: string
+  className?: string
+  delay?: number
+}) {
+  const inView = useContext(InViewContext)
+  const [animate, setAnimate] = useState(false)
+
+  useEffect(() => {
+    if (!inView) return
+    const t = setTimeout(() => setAnimate(true), delay * 1000)
+    return () => clearTimeout(t)
+  }, [inView, delay])
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      style={{
+        opacity: animate ? 1 : 0,
+        transform: animate ? undefined : 'scale(0.3)',
+        animation: animate ? `logo-elastic 0.6s ease-out both` : undefined,
+      }}
+    />
+  )
+}
+
+function LeagueRow({
+  label,
+  color,
+  count,
+  delay,
+}: {
+  league: string
+  label: string
+  color: string
+  count: number
+  delay: number
+}) {
+  const inView = useContext(InViewContext)
+  return (
+    <div
+      className="flex items-center justify-between text-xs"
+      style={{
+        opacity: inView ? 1 : 0,
+        transform: inView ? 'translateX(0)' : 'translateX(-12px)',
+        transition: `opacity 0.3s ease ${delay}s, transform 0.3s ease ${delay}s`,
+      }}
+    >
+      <div className="flex items-center gap-1.5">
+        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
+        <span className="text-text-muted">{label}</span>
+      </div>
+      <span className="font-semibold">
+        <AnimatedNumber value={count} duration={600} />
+      </span>
+    </div>
+  )
+}
+
+function AnimatedBar({
+  width,
+  style,
+  className,
+}: {
+  width: string
+  style?: React.CSSProperties
+  className?: string
+}) {
+  const inView = useContext(InViewContext)
+  return (
+    <div
+      className={className}
+      style={{
+        ...style,
+        width: inView ? width : '0%',
+        transition: 'width 1s cubic-bezier(0.34, 1.56, 0.64, 1)',
+      }}
+    />
+  )
+}
+
+function HeatmapGrid({
+  yearsAlive,
+  birthYear,
+  yearWinCounts,
+  yearChamps,
+  maxWinsInYear,
+}: {
+  yearsAlive: number
+  birthYear: number
+  yearWinCounts: Map<number, number>
+  yearChamps: Map<number, { league: string; espnId: string; name: string }[]>
+  maxWinsInYear: number
+}) {
+  const inView = useContext(InViewContext)
+  return (
+    <div className="mt-3 flex flex-wrap gap-[3px] overflow-visible">
+      {Array.from({ length: yearsAlive }, (_, i) => {
+        const year = birthYear + i
+        const count = yearWinCounts.get(year) || 0
+        const teams = yearChamps.get(year)
+        const intensity = count > 0 ? 0.25 + 0.75 * (count / maxWinsInYear) : 0
+        return count > 0 ? (
+          <div key={year} className="relative group">
+            <div
+              className="w-3.5 h-3.5 rounded-sm cursor-pointer"
+              style={{
+                backgroundColor: `rgba(29, 66, 138, ${intensity})`,
+                opacity: inView ? 1 : 0,
+                transition: `opacity 0.3s ease ${i * 0.02}s`,
+              }}
+            />
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1.5 bg-gray-900 text-gray-100 text-[11px] rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-20 w-max max-w-[200px]">
+              <div className="font-bold">{year}</div>
+              {teams?.map((t, j) => (
+                <div key={j} className="flex items-center gap-1.5 text-gray-300 mt-0.5">
+                  <img
+                    src={getTeamLogoUrl(t.league, t.espnId)}
+                    alt=""
+                    className="w-3.5 h-3.5 object-contain flex-shrink-0"
+                  />
+                  <span className="truncate">{t.name}</span>
+                </div>
+              ))}
+              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+            </div>
+          </div>
+        ) : (
+          <div
+            key={year}
+            className="w-3.5 h-3.5 rounded-sm"
+            style={{
+              backgroundColor: 'var(--color-border)',
+              opacity: inView ? 1 : 0,
+              transition: `opacity 0.3s ease ${i * 0.02}s`,
+            }}
+          />
+        )
+      })}
+    </div>
+  )
+}
 
 // Stat card entrance variants — each card gets a different personality
 const cardVariants = [
@@ -51,25 +250,28 @@ function StatCard({
   const variant = cardVariants[index % cardVariants.length]
 
   return (
-    <motion.div
-      ref={ref}
-      className={className}
-      initial={variant.hidden}
-      animate={isInView ? variant.visible : variant.hidden}
-      transition={{
-        duration: 0.5,
-        delay: index * 0.08,
-        ease: [0.34, 1.56, 0.64, 1],
-      }}
-    >
-      {children}
-    </motion.div>
+    <InViewContext.Provider value={isInView}>
+      <motion.div
+        ref={ref}
+        className={className}
+        initial={variant.hidden}
+        animate={isInView ? variant.visible : variant.hidden}
+        transition={{
+          duration: 0.5,
+          delay: index * 0.08,
+          ease: [0.34, 1.56, 0.64, 1],
+        }}
+      >
+        {children}
+      </motion.div>
+    </InViewContext.Provider>
   )
 }
 
 const STREAK_VISIBLE = 5
 
 function StreakTitles({ titles }: { titles: { year: number; league: string; espnId: string }[] }) {
+  const inView = useContext(InViewContext)
   const [expanded, setExpanded] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -93,6 +295,11 @@ function StreakTitles({ titles }: { titles: { year: number; league: string; espn
         <div
           key={i}
           className="flex items-center gap-1 bg-surface-alt rounded-full pl-0.5 pr-2 py-0.5"
+          style={{
+            opacity: inView ? 1 : 0,
+            transform: inView ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.8)',
+            transition: `opacity 0.3s ease ${0.4 + i * 0.08}s, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.4 + i * 0.08}s`,
+          }}
         >
           <img src={getTeamLogoUrl(t.league, t.espnId)} alt="" className="w-4 h-4 object-contain" />
           <span className="text-[11px] font-semibold">{t.year}</span>
@@ -108,7 +315,7 @@ function StreakTitles({ titles }: { titles: { year: number; league: string; espn
             +{overflow.length} more
           </button>
           {expanded && (
-            <div className="absolute bottom-full left-0 mb-1.5 p-2 bg-white rounded-xl border border-border shadow-lg z-30 flex flex-wrap gap-1.5 min-w-max">
+            <div className="absolute bottom-full left-0 mb-1.5 p-2 bg-card rounded-xl border border-border shadow-lg z-30 flex flex-wrap gap-1.5 min-w-max">
               {overflow.map((t, i) => (
                 <div
                   key={i}
@@ -413,7 +620,9 @@ export function StatsBar({
     className: 'col-span-2 bg-gradient-to-br from-nfl via-nba to-cfb rounded-2xl p-6 text-white',
     node: (
       <>
-        <div className="text-6xl font-black leading-none">{totalTitles}</div>
+        <div className="text-6xl font-black leading-none">
+          <AnimatedNumber value={totalTitles} duration={1000} />
+        </div>
         <div className="text-white/80 text-sm mt-2">
           {totalTitles === 1 ? 'championship' : 'championships'} in your lifetime
           {losses.length > 0 && (
@@ -436,47 +645,25 @@ export function StatsBar({
   // Win years — spans 2 cols for the contribution chart
   cards.push({
     key: 'coverage',
-    className: 'col-span-2 bg-white rounded-2xl border border-border p-4',
+    className: 'col-span-2 bg-card rounded-2xl border border-border p-4',
     node: (
       <>
         <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">
           Win Years
         </div>
         <div className="text-2xl font-black mt-1">
-          {yearsWithWin}
-          <span className="text-base font-normal text-text-muted">/{yearsAlive}</span>
+          <AnimatedNumber value={yearsWithWin} />
+          <span className="text-base font-normal text-text-muted">
+            /<AnimatedNumber value={yearsAlive} />
+          </span>
         </div>
-        <div className="mt-3 flex flex-wrap gap-[3px]">
-          {Array.from({ length: yearsAlive }, (_, i) => {
-            const year = birthYear + i
-            const count = yearWinCounts.get(year) || 0
-            const teams = yearChamps.get(year)
-            const intensity = count > 0 ? 0.25 + 0.75 * (count / maxWinsInYear) : 0
-            return count > 0 ? (
-              <div key={year} className="relative group">
-                <div
-                  className="w-3.5 h-3.5 rounded-sm cursor-pointer"
-                  style={{ backgroundColor: `rgba(29, 66, 138, ${intensity})` }}
-                />
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1.5 bg-text text-white text-[11px] rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-20">
-                  <div className="font-bold">{year}</div>
-                  {teams?.map((t, j) => (
-                    <div key={j} className="text-white/80">
-                      {t.name}
-                    </div>
-                  ))}
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-text" />
-                </div>
-              </div>
-            ) : (
-              <div
-                key={year}
-                className="w-3.5 h-3.5 rounded-sm"
-                style={{ backgroundColor: 'var(--color-surface-alt)' }}
-              />
-            )
-          })}
-        </div>
+        <HeatmapGrid
+          yearsAlive={yearsAlive}
+          birthYear={birthYear}
+          yearWinCounts={yearWinCounts}
+          yearChamps={yearChamps}
+          maxWinsInYear={maxWinsInYear}
+        />
         <div className="flex justify-between text-[10px] text-text-muted mt-1.5">
           <span>{birthYear}</span>
           <span>{currentYear}</span>
@@ -489,30 +676,23 @@ export function StatsBar({
   if (leagueBreakdown.length > 1) {
     cards.push({
       key: 'league',
-      className: 'bg-white rounded-2xl border border-border p-4',
+      className: 'bg-card rounded-2xl border border-border p-4',
       node: (
         <>
           <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">
             By League
           </div>
-          <div className="flex h-2 rounded-full overflow-hidden mt-3">
-            {leagueBreakdown.map((l) => (
-              <div
-                key={l.league}
-                className="h-full first:rounded-l-full last:rounded-r-full"
-                style={{ width: `${l.pct}%`, backgroundColor: l.color }}
-              />
-            ))}
-          </div>
+          <LeagueBar leagueBreakdown={leagueBreakdown} />
           <div className="flex flex-col gap-1.5 mt-3">
-            {leagueBreakdown.map((l) => (
-              <div key={l.league} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: l.color }} />
-                  <span className="text-text-muted">{LEAGUE_LABELS[l.league] || l.league}</span>
-                </div>
-                <span className="font-semibold">{l.count}</span>
-              </div>
+            {leagueBreakdown.map((l, i) => (
+              <LeagueRow
+                key={l.league}
+                league={l.league}
+                label={LEAGUE_LABELS[l.league] || l.league}
+                color={l.color}
+                count={l.count}
+                delay={0.3 + i * 0.1}
+              />
             ))}
           </div>
         </>
@@ -525,7 +705,7 @@ export function StatsBar({
     cards.push({
       key: 'best-year',
       className:
-        'row-span-2 bg-white rounded-2xl border border-border p-4 flex flex-col items-center justify-center text-center',
+        'row-span-2 bg-card rounded-2xl border border-border p-4 flex flex-col items-center justify-center text-center',
       node: (
         <>
           <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">
@@ -534,16 +714,17 @@ export function StatsBar({
           <div className="text-3xl font-black mt-1">{bestYear.year}</div>
           <div className="flex items-center justify-center gap-2 mt-3">
             {bestYear.teams.map((t, i) => (
-              <img
+              <AnimatedLogo
                 key={i}
                 src={getTeamLogoUrl(t.league, t.espnId)}
                 alt=""
                 className="w-10 h-10 object-contain"
+                delay={0.2 + i * 0.15}
               />
             ))}
           </div>
           <div className="text-xs text-text-muted mt-2">
-            {bestYear.count} {bestYear.count === 1 ? 'title' : 'titles'}
+            <AnimatedNumber value={bestYear.count} /> {bestYear.count === 1 ? 'title' : 'titles'}
           </div>
         </>
       ),
@@ -556,7 +737,7 @@ export function StatsBar({
     cards.push({
       key: 'mvp',
       className:
-        'row-span-2 bg-white rounded-2xl border border-border p-4 flex flex-col items-center justify-center text-center',
+        'row-span-2 bg-card rounded-2xl border border-border p-4 flex flex-col items-center justify-center text-center',
       node: (
         <>
           <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">
@@ -564,11 +745,12 @@ export function StatsBar({
           </div>
           <div className="flex items-center justify-center mt-3 gap-3">
             {topTeams.map((t, i) => (
-              <img
+              <AnimatedLogo
                 key={i}
                 src={getTeamLogoUrl(t.league, t.espnId)}
                 alt={t.name}
                 className={`object-contain ${isTie ? 'w-12 h-12' : 'w-14 h-14'}`}
+                delay={0.3 + i * 0.15}
               />
             ))}
           </div>
@@ -599,27 +781,28 @@ export function StatsBar({
     const droughtWidthPct = yearsAlive > 0 ? (droughtYearSpan / yearsAlive) * 100 : 0
     cards.push({
       key: 'drought',
-      className: 'bg-white rounded-2xl border border-border p-4',
+      className: 'bg-card rounded-2xl border border-border p-4',
       node: (
         <>
           <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">
             Longest Drought
           </div>
           <div className="text-2xl font-black mt-1">
-            {drought.years}
+            <AnimatedNumber value={drought.years} />
             <span className="text-base font-normal text-text-muted"> yrs</span>
             {drought.months > 0 && (
               <>
                 {' '}
-                {drought.months}
+                <AnimatedNumber value={drought.months} />
                 <span className="text-base font-normal text-text-muted"> mo</span>
               </>
             )}
           </div>
-          <div className="mt-3 relative h-2 rounded-full bg-surface-alt overflow-hidden">
-            <div
-              className="absolute top-0 bottom-0 rounded-full bg-gradient-to-r from-red-300 to-red-500"
-              style={{ left: `${droughtStartPct}%`, width: `${droughtWidthPct}%` }}
+          <div className="mt-3 relative h-2 rounded-full bg-border overflow-hidden">
+            <AnimatedBar
+              width={`${droughtWidthPct}%`}
+              className="absolute top-0 bottom-0 rounded-full bg-gradient-to-r from-red-400 to-red-500"
+              style={{ left: `${droughtStartPct}%` }}
             />
           </div>
           <div className="flex justify-between text-[10px] text-text-muted mt-1">
@@ -651,25 +834,26 @@ export function StatsBar({
     }
     cards.push({
       key: 'streak',
-      className: 'bg-white rounded-2xl border border-border p-4',
+      className: 'bg-card rounded-2xl border border-border p-4',
       node: (
         <>
           <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">
             Longest Streak
           </div>
           <div className="text-2xl font-black mt-1">
-            {longestStreak.years}
+            <AnimatedNumber value={longestStreak.years} />
             <span className="text-base font-normal text-text-muted"> yrs in a row</span>
             {streakTitles.length > longestStreak.years && (
               <span className="text-xs font-normal text-text-muted ml-1">
-                ({streakTitles.length} titles)
+                (<AnimatedNumber value={streakTitles.length} /> titles)
               </span>
             )}
           </div>
-          <div className="mt-3 relative h-2 rounded-full bg-surface-alt overflow-hidden">
-            <div
-              className="absolute top-0 bottom-0 rounded-full bg-gradient-to-r from-green-300 to-green-500"
-              style={{ left: `${streakStartPct}%`, width: `${streakWidthPct}%` }}
+          <div className="mt-3 relative h-2 rounded-full bg-border overflow-hidden">
+            <AnimatedBar
+              width={`${streakWidthPct}%`}
+              className="absolute top-0 bottom-0 rounded-full bg-gradient-to-r from-green-400 to-green-500"
+              style={{ left: `${streakStartPct}%` }}
             />
           </div>
           <div className="flex justify-between text-[10px] text-text-muted mt-1">
@@ -690,14 +874,16 @@ export function StatsBar({
     cards.push({
       key: 'status',
       className:
-        'bg-white rounded-2xl border border-border p-4 flex flex-col items-center justify-center text-center',
+        'bg-card rounded-2xl border border-border p-4 flex flex-col items-center justify-center text-center',
       node:
         streakLength >= 2 ? (
           <>
             <div className="text-xs font-semibold text-green-600 uppercase tracking-wider">
               Hot Streak
             </div>
-            <div className="text-3xl font-black mt-1 text-green-600">{streakLength}</div>
+            <div className="text-3xl font-black mt-1 text-green-600">
+              <AnimatedNumber value={streakLength} />
+            </div>
             <div className="text-xs text-text-muted mt-1">consecutive years with a title</div>
           </>
         ) : yearsSinceLastWin === 0 ? (
@@ -716,18 +902,19 @@ export function StatsBar({
             {sinceLastTitle ? (
               <>
                 <div className="text-3xl font-black mt-1">
-                  {sinceLastTitle.years}
+                  <AnimatedNumber value={sinceLastTitle.years} />
                   <span className="text-base font-normal text-text-muted"> yrs</span>
                 </div>
                 <div className="text-sm font-semibold text-text-muted">
-                  {sinceLastTitle.months}
-                  <span className="font-normal"> mo</span> {sinceLastTitle.days}
+                  <AnimatedNumber value={sinceLastTitle.months} />
+                  <span className="font-normal"> mo</span>{' '}
+                  <AnimatedNumber value={sinceLastTitle.days} />
                   <span className="font-normal"> days</span>
                 </div>
               </>
             ) : (
               <div className="text-3xl font-black mt-1">
-                {yearsSinceLastWin}
+                <AnimatedNumber value={yearsSinceLastWin!} />
                 <span className="text-base font-normal text-text-muted"> yrs</span>
               </div>
             )}

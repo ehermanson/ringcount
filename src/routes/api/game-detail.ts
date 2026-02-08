@@ -58,11 +58,11 @@ Write 2-3 engaging paragraphs telling the narrative. For single games (NFL/CFB/C
 List 3-5 notable statistics as bullet points. For series, include series-wide stats.
 
 ## Legacy
-One paragraph on what this championship meant for the winning team and its place in sports history.
+If significant, one paragraph on what this championship meant for the winning team. Otherwise, skip this section.
 
 Keep responses factual. If you're unsure about specific details, focus on what is known and avoid fabricating statistics.`
 
-const SUPER_BOWL_XLII_PROMPT = `You are a sports historian. You have no record of Super Bowl XLII. The Patriots went 18-0 that season and then the season ended — no postseason data exists. Respond in 2-3 dry, matter-of-fact sentences noting the missing records. Play it straight, like a confused archivist — no winking, no sarcasm, no exclamation points. Do NOT output a boxscore block.`
+const SUPER_BOWL_XLII_PROMPT = `You are a sports historian. You have no record of Super Bowl XLII. The Patriots went 18-0 between the regular season and two playoff games — but no data exists for the Super Bowl. The assumption is that the Patriots probably won. Respond in 2-3 dry, matter-of-fact sentences noting the missing records. Play it straight, like a confused archivist — no winking, no sarcasm, no exclamation points. Do NOT output a boxscore block.`
 
 export const Route = createFileRoute('/api/game-detail')({
   server: {

@@ -13,6 +13,7 @@
   --color-border: #e2e8f0;
   --color-text: #0f172a;
   --color-text-muted: #64748b;
+  --color-card: #ffffff;
 
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 
@@ -72,6 +73,30 @@
 .streaming-text h2,
 .streaming-text h3 {
   animation: text-fade-in 0.3s ease-out both;
+}
+
+@keyframes logo-elastic {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.dark {
+  --color-surface: #0f172a;
+  --color-surface-alt: #1e293b;
+  --color-border: #334155;
+  --color-text: #f1f5f9;
+  --color-text-muted: #94a3b8;
+  --color-card: #1e293b;
 }
 
 .scroll-picker-mask {

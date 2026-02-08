@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as SelectRouteImport } from './routes/select'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiOgRouteImport } from './routes/api/og'
+import { Route as ApiLogoRouteImport } from './routes/api/logo'
 import { Route as ApiGameDetailRouteImport } from './routes/api/game-detail'
 
 const TimelineRoute = TimelineRouteImport.update({
@@ -29,6 +31,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiOgRoute = ApiOgRouteImport.update({
+  id: '/api/og',
+  path: '/api/og',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiLogoRoute = ApiLogoRouteImport.update({
+  id: '/api/logo',
+  path: '/api/logo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiGameDetailRoute = ApiGameDetailRouteImport.update({
   id: '/api/game-detail',
   path: '/api/game-detail',
@@ -40,12 +52,16 @@ export interface FileRoutesByFullPath {
   '/select': typeof SelectRoute
   '/timeline': typeof TimelineRoute
   '/api/game-detail': typeof ApiGameDetailRoute
+  '/api/logo': typeof ApiLogoRoute
+  '/api/og': typeof ApiOgRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/select': typeof SelectRoute
   '/timeline': typeof TimelineRoute
   '/api/game-detail': typeof ApiGameDetailRoute
+  '/api/logo': typeof ApiLogoRoute
+  '/api/og': typeof ApiOgRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +69,34 @@ export interface FileRoutesById {
   '/select': typeof SelectRoute
   '/timeline': typeof TimelineRoute
   '/api/game-detail': typeof ApiGameDetailRoute
+  '/api/logo': typeof ApiLogoRoute
+  '/api/og': typeof ApiOgRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/select' | '/timeline' | '/api/game-detail'
+  fullPaths:
+    | '/'
+    | '/select'
+    | '/timeline'
+    | '/api/game-detail'
+    | '/api/logo'
+    | '/api/og'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/select' | '/timeline' | '/api/game-detail'
-  id: '__root__' | '/' | '/select' | '/timeline' | '/api/game-detail'
+  to:
+    | '/'
+    | '/select'
+    | '/timeline'
+    | '/api/game-detail'
+    | '/api/logo'
+    | '/api/og'
+  id:
+    | '__root__'
+    | '/'
+    | '/select'
+    | '/timeline'
+    | '/api/game-detail'
+    | '/api/logo'
+    | '/api/og'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +104,8 @@ export interface RootRouteChildren {
   SelectRoute: typeof SelectRoute
   TimelineRoute: typeof TimelineRoute
   ApiGameDetailRoute: typeof ApiGameDetailRoute
+  ApiLogoRoute: typeof ApiLogoRoute
+  ApiOgRoute: typeof ApiOgRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -92,6 +131,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/og': {
+      id: '/api/og'
+      path: '/api/og'
+      fullPath: '/api/og'
+      preLoaderRoute: typeof ApiOgRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/logo': {
+      id: '/api/logo'
+      path: '/api/logo'
+      fullPath: '/api/logo'
+      preLoaderRoute: typeof ApiLogoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/game-detail': {
       id: '/api/game-detail'
       path: '/api/game-detail'
@@ -107,6 +160,8 @@ const rootRouteChildren: RootRouteChildren = {
   SelectRoute: SelectRoute,
   TimelineRoute: TimelineRoute,
   ApiGameDetailRoute: ApiGameDetailRoute,
+  ApiLogoRoute: ApiLogoRoute,
+  ApiOgRoute: ApiOgRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

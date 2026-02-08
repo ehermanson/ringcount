@@ -99,7 +99,7 @@ export function TimelineEntry({
 
       {/* Content card */}
       <div
-        className="bg-white rounded-xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+        className="bg-card rounded-xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
         onClick={() => onSelect(championship)}
       >
         <div className="flex">
@@ -179,17 +179,17 @@ export function TimelineLossEntry({
     <div className="relative pb-3 pl-8">
       {/* Timeline dot */}
       <div
-        className={`absolute left-0 w-2 h-2 rounded-full border-[1.5px] z-10 -ml-[4px] mt-5 ${is18and1 ? 'border-gray-300 bg-gray-100' : 'border-red-400 bg-red-50'}`}
+        className={`absolute left-0 w-2 h-2 rounded-full border-[1.5px] z-10 -ml-[4px] mt-5 ${is18and1 ? 'border-border bg-surface-alt' : 'border-red-400 bg-card'}`}
       />
 
-      {/* Content card */}
+      {/* Content card — same bg-card as wins, red accent only on left bar + badge */}
       <div
-        className={`flex-1 rounded-xl border shadow-sm overflow-hidden hover:shadow-md transition-shadow opacity-80 hover:opacity-100 cursor-pointer ${is18and1 ? 'bg-gray-50/60 border-gray-200/80' : 'bg-red-50/60 border-red-200/80'}`}
+        className="bg-card rounded-xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow opacity-75 hover:opacity-100 cursor-pointer"
         onClick={() => onSelect(championship)}
       >
         <div className="flex">
           {/* Left bar */}
-          <div className={`w-1 flex-shrink-0 ${is18and1 ? 'bg-gray-300/70' : 'bg-red-400/70'}`} />
+          <div className={`w-1 flex-shrink-0 ${is18and1 ? 'bg-border' : 'bg-red-400'}`} />
 
           <div className="flex-1 p-4">
             <div className="flex items-start gap-3">
@@ -205,31 +205,27 @@ export function TimelineLossEntry({
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <h3
-                    className={`text-lg font-bold leading-tight ${is18and1 ? 'text-gray-500' : 'text-red-900/80'}`}
-                  >
+                  <h3 className="text-lg font-bold leading-tight">
                     {championship.team_city} {championship.team_name}
                   </h3>
                   <span
-                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide ${is18and1 ? 'text-gray-400 bg-gray-100' : 'text-red-600 bg-red-100'}`}
+                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide ${is18and1 ? 'text-text-muted bg-surface-alt' : 'text-red-500 bg-red-500/10'}`}
                   >
                     {is18and1 ? '???' : 'Loss'}
                   </span>
                 </div>
-                <p className={`text-sm mt-0.5 ${is18and1 ? 'text-gray-400' : 'text-red-900/60'}`}>
+                <p className="text-sm text-text-muted mt-0.5">
                   <span>{is18and1 ? 'played' : 'lost to'}</span>{' '}
-                  <span className={`font-medium ${is18and1 ? 'text-gray-500' : 'text-red-900/80'}`}>
+                  <span className="font-medium text-text">
                     {championship.winning_team_display_name}
                   </span>
                   {hasScore && (
-                    <span className="font-semibold ml-1 text-red-900/80">
+                    <span className="font-semibold ml-1">
                       {championship.losing_score}&ndash;{championship.winning_score}
                     </span>
                   )}
                 </p>
-                <p
-                  className={`text-xs mt-1.5 flex items-center gap-1 ${is18and1 ? 'text-gray-400' : 'text-red-900/40'}`}
-                >
+                <p className="text-xs text-text-muted mt-1.5 flex items-center gap-1">
                   <LeagueLogo league={championship.league} className="w-3.5 h-3.5 inline-block" />
                   {championship.game_title} &middot;{' '}
                   {LEAGUE_LABELS[championship.league] || championship.league}

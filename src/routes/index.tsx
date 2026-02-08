@@ -183,7 +183,7 @@ function ScrollPicker({
         {label}
       </label>
       <div
-        className={`relative rounded-xl border-2 bg-white transition-all duration-200 overflow-hidden group ${
+        className={`relative rounded-xl border-2 bg-card transition-all duration-200 overflow-hidden group ${
           highlight
             ? 'border-nba/40 shadow-lg shadow-nba/10'
             : value
@@ -351,7 +351,7 @@ function LandingPage() {
                   ${
                     month === i + 1
                       ? 'bg-gradient-to-br from-nba to-nfl text-white shadow-lg shadow-nba/25'
-                      : 'bg-white border border-border text-text-muted hover:border-nba/30 hover:text-text hover:shadow-sm'
+                      : 'bg-card border border-border text-text-muted hover:border-nba/30 hover:text-text hover:shadow-sm'
                   }
                   ${bouncing === 'month' && month === i + 1 ? 'animate-pop' : ''}`}
               >

@@ -146,21 +146,7 @@ export const getTeamsByIds = createServerFn({ method: 'GET' })
   })
 
 export function getTeamLogoUrl(league: string, espnId: string): string {
-  switch (league) {
-    case 'NFL':
-      return `https://a.espncdn.com/i/teamlogos/nfl/500/${espnId}.png`
-    case 'MLB':
-      return `https://a.espncdn.com/i/teamlogos/mlb/500/${espnId}.png`
-    case 'NBA':
-      return `https://a.espncdn.com/i/teamlogos/nba/500/${espnId}.png`
-    case 'NHL':
-      return `https://a.espncdn.com/i/teamlogos/nhl/500/${espnId}.png`
-    case 'CFB':
-    case 'CBB':
-      return `https://a.espncdn.com/i/teamlogos/ncaa/500/${espnId}.png`
-    default:
-      return ''
-  }
+  return `/api/logo?league=${league}&id=${espnId}`
 }
 
 export const LEAGUE_LABELS: Record<string, string> = {
