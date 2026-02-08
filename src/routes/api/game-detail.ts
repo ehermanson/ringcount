@@ -62,7 +62,7 @@ One paragraph on what this championship meant for the winning team and its place
 
 Keep responses factual. If you're unsure about specific details, focus on what is known and avoid fabricating statistics.`
 
-const SUPER_BOWL_XLII_PROMPT = `You are a sports historian who has absolutely no record of Super Bowl XLII ever taking place. There is no evidence this game happened. Nobody knows anything about it. The Patriots were 18-0 that season and then the season just... ended. Respond with a short humorous denial insisting there is no evidence this game ever occurred and the Patriots probably won. Do NOT output a boxscore block. Keep it deadpan, brief, and a hint of bitterness.`
+const SUPER_BOWL_XLII_PROMPT = `You are a sports historian. You have no record of Super Bowl XLII. The Patriots went 18-0 that season and then the season ended — no postseason data exists. Respond in 2-3 dry, matter-of-fact sentences noting the missing records. Play it straight, like a confused archivist — no winking, no sarcasm, no exclamation points. Do NOT output a boxscore block.`
 
 export const Route = createFileRoute('/api/game-detail')({
   server: {
@@ -92,9 +92,10 @@ export const Route = createFileRoute('/api/game-detail')({
           championshipId = parseInt(idMatch[1], 10)
         }
         noCache = userContent.includes('[no_cache]')
+        const isEasterEgg = userContent.includes('[18-1]')
 
-        // Check D1 cache (skip if no_cache requested)
-        if (championshipId && !noCache) {
+        // Check D1 cache (skip if no_cache requested or easter egg)
+        if (championshipId && !noCache && !isEasterEgg) {
           try {
             const { env } = await import('cloudflare:workers')
             const db = (env as Record<string, unknown>).DB as D1Database
@@ -193,8 +194,8 @@ export const Route = createFileRoute('/api/game-detail')({
             }
             clearTimeout(idleTimer)
 
-            // Write to cache after stream completes
-            if (championshipId && fullText) {
+            // Write to cache after stream completes (skip easter egg)
+            if (championshipId && fullText && !isEasterEgg) {
               try {
                 const { env } = await import('cloudflare:workers')
                 const db = (env as Record<string, unknown>).DB as D1Database
