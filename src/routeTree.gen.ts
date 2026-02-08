@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as SelectRouteImport } from './routes/select'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiGameDetailRouteImport } from './routes/api/game-detail'
 
 const TimelineRoute = TimelineRouteImport.update({
   id: '/timeline',
@@ -28,35 +29,44 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiGameDetailRoute = ApiGameDetailRouteImport.update({
+  id: '/api/game-detail',
+  path: '/api/game-detail',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/select': typeof SelectRoute
   '/timeline': typeof TimelineRoute
+  '/api/game-detail': typeof ApiGameDetailRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/select': typeof SelectRoute
   '/timeline': typeof TimelineRoute
+  '/api/game-detail': typeof ApiGameDetailRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/select': typeof SelectRoute
   '/timeline': typeof TimelineRoute
+  '/api/game-detail': typeof ApiGameDetailRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/select' | '/timeline'
+  fullPaths: '/' | '/select' | '/timeline' | '/api/game-detail'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/select' | '/timeline'
-  id: '__root__' | '/' | '/select' | '/timeline'
+  to: '/' | '/select' | '/timeline' | '/api/game-detail'
+  id: '__root__' | '/' | '/select' | '/timeline' | '/api/game-detail'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SelectRoute: typeof SelectRoute
   TimelineRoute: typeof TimelineRoute
+  ApiGameDetailRoute: typeof ApiGameDetailRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +92,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/game-detail': {
+      id: '/api/game-detail'
+      path: '/api/game-detail'
+      fullPath: '/api/game-detail'
+      preLoaderRoute: typeof ApiGameDetailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SelectRoute: SelectRoute,
   TimelineRoute: TimelineRoute,
+  ApiGameDetailRoute: ApiGameDetailRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

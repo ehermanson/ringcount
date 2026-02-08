@@ -7,7 +7,7 @@ const LOGO_URLS: Record<string, string> = {
   CBB: 'https://a.espncdn.com/i/espn/misc_logos/500/ncaa.png',
 }
 
-export function LeagueTrophy({ league, className }: { league: string; className?: string }) {
+export function LeagueLogo({ league, className }: { league: string; className?: string }) {
   const url = LOGO_URLS[league]
   if (!url) return null
   return <img src={url} alt={`${league} logo`} className={className} />

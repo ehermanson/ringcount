@@ -6,10 +6,11 @@ export const Route = createRootRoute({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'Championship Tracker' },
+      { title: 'Ring Count' },
       {
         name: 'description',
-        content: 'See every championship your favorite teams have won in your lifetime',
+        content:
+          "What's your ring count? See every championship your teams have won in your lifetime.",
       },
     ],
     links: [

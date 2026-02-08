@@ -30,3 +30,11 @@ CREATE TABLE championships (
 CREATE INDEX idx_championships_year ON championships(year);
 CREATE INDEX idx_championships_winning_team ON championships(winning_team_id);
 CREATE INDEX idx_championships_league ON championships(league);
+
+CREATE TABLE game_details_cache (
+  championship_id INTEGER PRIMARY KEY,
+  content TEXT NOT NULL,
+  model TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (championship_id) REFERENCES championships(id)
+);

@@ -1,7 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
-
-const LS_KEY = 'championship-tracker-selections'
 import {
   getTeamsByLeague,
   getTeamLogoUrl,
@@ -9,6 +7,8 @@ import {
   type Team,
   type TeamsByLeague,
 } from '../lib/db'
+
+const LS_KEY = 'ring-count-selections'
 
 type SelectSearch = {
   dob: string

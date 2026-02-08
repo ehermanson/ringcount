@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { ChevronUp, ChevronDown } from 'lucide-react'
-import { LeagueTrophy } from '../lib/trophies'
+import { LeagueLogo } from '../lib/league-logo'
 
-const LS_KEY = 'championship-tracker-selections'
+const LS_KEY = 'ring-count-selections'
 
 export const Route = createFileRoute('/')({
   component: LandingPage,
@@ -324,14 +324,14 @@ function LandingPage() {
             🏆
           </span>
           <h1 className="text-5xl font-black tracking-tight mb-3">
-            Championship
+            Ring
             <br />
             <span className="bg-gradient-to-r from-nfl via-nba to-cfb bg-clip-text text-transparent">
-              Tracker
+              Count
             </span>
           </h1>
           <p className="text-text-muted text-lg">
-            See every championship your favorite teams have won in your lifetime
+            Every championship your teams have won in your lifetime
           </p>
         </div>
 
@@ -454,7 +454,7 @@ function LandingPage() {
         <div className="mt-8 flex flex-wrap justify-center gap-6">
           {LEAGUES.map((league) => (
             <div key={league.key} className="flex flex-col items-center gap-1.5">
-              <LeagueTrophy
+              <LeagueLogo
                 league={league.key}
                 className={`w-8 h-8 text-${league.key.toLowerCase()}`}
               />
