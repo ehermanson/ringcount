@@ -54,11 +54,12 @@ export const Route = createFileRoute('/timeline')({
     const count = data?.championships.length ?? 0
     const birthYear = search.dob ? new Date(search.dob).getFullYear() : ''
     const teamNames = data?.teams.map((t) => `${t.city} ${t.name}`).join(', ') ?? ''
+    const logos = data?.teams.map((t) => `${t.league}:${t.espn_id}`).join(',') ?? ''
     const ogTitle = birthYear
       ? `${count} Championship${count !== 1 ? 's' : ''} Since ${birthYear} | Ring Count`
       : `${count} Championship${count !== 1 ? 's' : ''} | Ring Count`
     const ogDescription = teamNames ? `${teamNames} \u2014 see every ring` : 'See every ring'
-    const ogImage = `https://ringcount.app/api/og?count=${count}&dob=${encodeURIComponent(search.dob)}&names=${encodeURIComponent(teamNames)}&teams=${encodeURIComponent(search.teams)}`
+    const ogImage = `https://ringcount.app/api/og?count=${count}&dob=${encodeURIComponent(search.dob)}&names=${encodeURIComponent(teamNames)}&logos=${encodeURIComponent(logos)}`
 
     return {
       meta: [
