@@ -78,6 +78,7 @@ interface ESPNCompetition {
   competitors: ESPNCompetitor[]
   series?: ESPNSeries
   date: string
+  notes?: Array<{ type: string; headline: string }>
 }
 
 interface ESPNStatus {
@@ -98,8 +99,12 @@ interface ESPNResponse {
 
 function matchesKeywords(event: ESPNEvent, keywords: string[]): boolean {
   const name = event.name.toLowerCase()
-  const noteText = (event.notes ?? []).map((n) => n.headline.toLowerCase()).join(' ')
-  const combined = `${name} ${noteText}`
+  const eventNotes = (event.notes ?? []).map((n) => n.headline.toLowerCase()).join(' ')
+  const compNotes = (event.competitions ?? [])
+    .flatMap((c) => c.notes ?? [])
+    .map((n) => n.headline.toLowerCase())
+    .join(' ')
+  const combined = `${name} ${eventNotes} ${compNotes}`
   return keywords.some((kw) => combined.includes(kw.toLowerCase()))
 }
 
@@ -218,13 +223,12 @@ async function processSingleGameEvent(
   // Build game title — for NFL, use the event name (e.g., "Super Bowl LIX")
   let gameTitle = config.gameTitle
   if (config.league === 'NFL') {
-    // Event name is usually like "Super Bowl LIX" or "Kansas City Chiefs at Philadelphia Eagles"
-    // Check notes first for explicit title, then fall back to event name
-    const sbNote = (event.notes ?? []).find((n) => n.headline.toLowerCase().includes('super bowl'))
+    // Check event notes, then competition notes, then event name for "Super Bowl" title
+    const allNotes = [...(event.notes ?? []), ...(competition.notes ?? [])]
+    const sbNote = allNotes.find((n) => n.headline.toLowerCase().includes('super bowl'))
     if (sbNote) {
       gameTitle = sbNote.headline
     } else if (event.name.toLowerCase().includes('super bowl')) {
-      // Extract just the "Super Bowl XXX" part
       const match = event.name.match(/Super Bowl [LXVI0-9]+/i)
       gameTitle = match ? match[0] : event.name
     }
